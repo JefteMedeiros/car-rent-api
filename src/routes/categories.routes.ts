@@ -1,25 +1,27 @@
-import { Router } from "express";
-import { Category } from "../model/Category";
+import { response, Router } from "express";
+import { CategoriesRepository } from "../repositories/CategoriesRepository";
 
 const categoriesRoutes = Router();
-
-const categories: Category[] = [];
+const categoriesRepository = new CategoriesRepository();
 
 //Path declarado em server.ts
-categoriesRoutes.post("/", (req, res) => {
+categoriesRoutes.post("/create", (req, res) => {
   const { name, description } = req.body;
 
-  const category = new Category();
-  
-  Object.assign(category, {
-    name,
-    description,
-    date: new Date(),
-  })
+  const categoryAlreadyExists = categoriesRepository.findByName(name);
 
-  categories.push(category);
+  if(categoryAlreadyExists) {
+    return res.status(400).json({error: "Category already exists!"})
+  }
 
-  return res.status(201).json(categories);
+  categoriesRepository.create({name, description})
+
+  return res.status(201).send();
 });
+
+categoriesRoutes.get("/retrieve", (req, res) => {
+  const list = categoriesRepository.list()
+  return res.status(200).json(list)
+})
 
 export { categoriesRoutes };
